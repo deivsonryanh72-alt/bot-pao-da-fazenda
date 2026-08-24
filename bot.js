@@ -1,5 +1,15 @@
 const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
+const http = require('http');
+
+// Cria um servidor HTTP simples para satisfazer a porta que o Render exige
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+    res.writeHead(200, { 'Content-Type': 'text/plain' });
+    res.end('AgiBots - Bot Pao da Fazenda On-line!\n');
+}).listen(PORT, () => {
+    console.log(`[AgiBots] Servidor HTTP rodando na porta ${PORT}`);
+});
 
 const client = new Client({
     authStrategy: new LocalAuth(),
@@ -21,6 +31,7 @@ const client = new Client({
 
 // Gera o QR Code no terminal/logs
 client.on('qr', (qr) => {
+    console.log('\n================ QR CODE GERADO ================');
     qrcode.generate(qr, { small: true });
     console.log('\n[AgiBots] Escaneie o QR Code acima com o WhatsApp do teste!\n');
 });
