@@ -1,11 +1,11 @@
 FROM node:18-slim
 
-# Instala as dependências do Chrome no Linux
+# Instala as dependências necessárias do Chromium no Debian
 RUN apt-get update && apt-get install -y \
     chromium \
-    nss \
-    freetype \
-    harfbuzz \
+    libnss3 \
+    libfreetype6 \
+    libharfbuzz0b \
     ca-certificates \
     fonts-freefont-ttf \
     --no-install-recommends \
