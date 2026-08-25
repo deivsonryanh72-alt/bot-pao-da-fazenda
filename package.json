@@ -4,7 +4,7 @@
   "description": "Bot WhatsApp Pão da Fazenda",
   "main": "bot.js",
   "scripts": {
-    "start": "node bot.js"
+    "start": "node --max-old-space-size=256 bot.js"
   },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.1",

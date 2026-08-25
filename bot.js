@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
 
-// Servidor HTTP para manter o Render ativo
+// Servidor HTTP para satisfazer a porta do Render
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -21,7 +21,14 @@ async function startBot() {
 
     const sock = makeWASocket({
         auth: state,
-        logger: pino({ level: 'silent' })
+        logger: pino({ level: 'silent' }),
+        printQRInTerminal: false,
+        // Configurações para economizar memória RAM no Render Free
+        downloadHistory: false,
+        syncFullHistory: false,
+        markOnlineOnConnect: false,
+        generateHighQualityLinkPreview: false,
+        getMessage: async () => { return { conversation: '' }; }
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -30,9 +37,9 @@ async function startBot() {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log('\n================ ESCANEIE O QR CODE ABAIXO ================');
+            console.log('\n================ ESCANEIE O QR CODE ================');
             qrcode.generate(qr, { small: true });
-            console.log('===========================================================\n');
+            console.log('===================================================\n');
         }
 
         if (connection === 'close') {
@@ -81,7 +88,7 @@ Digite apenas o *NÚMERO* da opção desejada:
                 await sock.sendMessage(from, { text: menu });
             } 
             
-            // Opção 1: Cardápio
+            // Opção 1
             else if (text === '1') {
                 await sock.sendMessage(from, { text: 
 `🥖 *Destaques de Hoje na Pão da Fazenda:*
@@ -96,7 +103,7 @@ Digite apenas o *NÚMERO* da opção desejada:
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 2: Encomendas
+            // Opção 2
             else if (text === '2') {
                 await sock.sendMessage(from, { text: 
 `🎂 *Encomendas Especiais:*
@@ -108,7 +115,7 @@ Para solicitar o catálogo de sabores ou fazer um orçamento customizado, digite
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 3: Site
+            // Opção 3
             else if (text === '3') {
                 await sock.sendMessage(from, { text: 
 `🌐 *Acesse nosso site completo:*
@@ -119,7 +126,7 @@ Confira fotos em alta qualidade, avaliações dos clientes e história da nossa 
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 4: Localização
+            // Opção 4
             else if (text === '4') {
                 await sock.sendMessage(from, { text: 
 `📍 *Venha nos visitar:*
@@ -133,7 +140,7 @@ https://maps.google.com/?q=Rua+Alzira+Barnab%C3%A9,+407+-+Jardim+Belo+Horizonte,
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 5: Atendente
+            // Opção 5
             else if (text === '5') {
                 await sock.sendMessage(from, { text: 
 `👤 *Atendimento do Balcão:*
