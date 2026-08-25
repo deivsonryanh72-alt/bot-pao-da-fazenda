@@ -1,8 +1,8 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para satisfazer o Render
+// Servidor HTTP para Render
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -11,48 +11,43 @@ http.createServer((req, res) => {
     console.log(`[AgiBots] Servidor HTTP rodando na porta ${PORT}`);
 });
 
-async function connectToWhatsApp() {
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+process.on('uncaughtException', (err) => {
+    console.error('[AgiBots Aviso]:', err.message);
+});
 
-    const sock = makeWASocket({
-        auth: state,
-        printQRInTerminal: false
-    });
+const client = new Client({
+    authStrategy: new LocalAuth(),
+    puppeteer: {
+        headless: "new",
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-gpu',
+            '--single-process' // Mantém o uso de memória baixo
+        ]
+    }
+});
 
-    sock.ev.on('creds.update', saveCreds);
+// Exibe QR Code no log
+client.on('qr', (qr) => {
+    console.log('\n================ QR CODE GERADO ================');
+    qrcode.generate(qr, { small: true });
+    console.log('\n[AgiBots] Escaneie o QR Code acima no seu WhatsApp!\n');
+});
 
-    sock.ev.on('connection.update', (update) => {
-        const { connection, lastDisconnect, qr } = update;
+client.on('ready', () => {
+    console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
+});
 
-        if (qr) {
-            console.log('\n================ QR CODE GERADO ================');
-            qrcode.generate(qr, { small: true });
-            console.log('\n[AgiBots] Escaneie o QR Code acima no seu WhatsApp!\n');
-        }
+// Fluxo de mensagens
+client.on('message', async msg => {
+    try {
+        const texto = msg.body.trim().toLowerCase();
 
-        if (connection === 'close') {
-            const shouldReconnect = (lastDisconnect?.error?.output?.statusCode !== DisconnectReason.loggedOut);
-            console.log('[AgiBots] Conexão fechada. Reconectando...', shouldReconnect);
-            if (shouldReconnect) {
-                connectToWhatsApp();
-            }
-        } else if (connection === 'open') {
-            console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
-        }
-    });
-
-    sock.ev.on('messages.upsert', async ({ messages, type }) => {
-        if (type !== 'notify') return;
-
-        for (const msg of messages) {
-            if (!msg.message || msg.key.fromMe) continue;
-
-            const from = msg.key.remoteJid;
-            const textMsg = (msg.message.conversation || msg.message.extendedTextMessage?.text || '').trim().toLowerCase();
-
-            // Menu Principal
-            if (textMsg.includes('oi') || textMsg.includes('ola') || textMsg.includes('boa') || textMsg.includes('menu') || textMsg === '0') {
-                const menu = 
+        // Menu Principal
+        if (texto.includes('oi') || texto.includes('ola') || texto.includes('boa') || texto.includes('menu') || texto === '0') {
+            const menu = 
 `🥖 *Pão da Fazenda - Panificação Artesanal*
 _Atendimento Rápido e Automático_
 
@@ -66,12 +61,12 @@ Digite apenas o *NÚMERO* da opção desejada:
 4️⃣ - 📍 Endereço & Localização (Google Maps)
 5️⃣ - 👤 Falar com Atendente no Balcão`;
 
-                await sock.sendMessage(from, { text: menu });
-            } 
-            
-            // Opção 1: Pães e Focaccias
-            else if (textMsg === '1') {
-                await sock.sendMessage(from, { text: 
+            await msg.reply(menu);
+        } 
+        
+        // Opção 1: Pães e Focaccias
+        else if (texto === '1') {
+            await msg.reply(
 `🥖 *Destaques de Hoje na Pão da Fazenda:*
 
 • Focaccia de Peito de Peru & Azeitonas
@@ -81,35 +76,38 @@ Digite apenas o *NÚMERO* da opção desejada:
 
 *(Responda com o nome do item para verificar disponibilidade)*
 
-_Digite *0* para voltar ao Menu Principal._` });
-            } 
+_Digite *0* para voltar ao Menu Principal._`
+            );
+        } 
 
-            // Opção 2: Encomendas
-            else if (textMsg === '2') {
-                await sock.sendMessage(from, { text: 
+        // Opção 2: Encomendas
+        else if (texto === '2') {
+            await msg.reply(
 `🎂 *Encomendas Especiais:*
 
 Aceitamos encomendas de bolos recheados, tortas salgadas para festas e fatias do dia.
 
 Para solicitar o catálogo de sabores ou fazer um orçamento customizado, digite *5* para falar direto com o balcão.
 
-_Digite *0* para voltar ao Menu Principal._` });
-            } 
+_Digite *0* para voltar ao Menu Principal._`
+            );
+        } 
 
-            // Opção 3: Link do Site
-            else if (textMsg === '3') {
-                await sock.sendMessage(from, { text: 
+        // Opção 3: Link do Site
+        else if (texto === '3') {
+            await msg.reply(
 `🌐 *Acesse nosso site completo:*
 
 Confira fotos em alta qualidade, avaliações dos clientes e história da nossa panificação:
 👉 https://deivsonryanh72-alt.github.io/pao-da-fazenda-site/
 
-_Digite *0* para voltar ao Menu Principal._` });
-            } 
+_Digite *0* para voltar ao Menu Principal._`
+            );
+        } 
 
-            // Opção 4: Localização e Maps
-            else if (textMsg === '4') {
-                await sock.sendMessage(from, { text: 
+        // Opção 4: Localização e Maps
+        else if (texto === '4') {
+            await msg.reply(
 `📍 *Venha nos visitar:*
 
 *Endereço:* R. Alzira Barnabé, 407 - Jardim Belo Horizonte, Indaiatuba - SP
@@ -118,18 +116,21 @@ _Digite *0* para voltar ao Menu Principal._` });
 🗺️ *Clique no link para abrir no seu GPS/Google Maps:*
 https://maps.google.com/?q=Rua+Alzira+Barnab%C3%A9,+407+-+Jardim+Belo+Horizonte,+Indaiatuba+-+SP
 
-_Digite *0* para voltar ao Menu Principal._` });
-            } 
+_Digite *0* para voltar ao Menu Principal._`
+            );
+        } 
 
-            // Opção 5: Atendimento Humano
-            else if (textMsg === '5') {
-                await sock.sendMessage(from, { text: 
+        // Opção 5: Atendimento Humano
+        else if (texto === '5') {
+            await msg.reply(
 `👤 *Atendimento do Balcão:*
 
-Um de nossos atendentes foi notificado e já vai te responder em instantes! Por favor, aguarde só um momento.` });
-            }
+Um de nossos atendentes foi notificado e já vai te responder em instantes! Por favor, aguarde só um momento.`
+            );
         }
-    });
-}
+    } catch (e) {
+        console.error('Erro:', e.message);
+    }
+});
 
-connectToWhatsApp();
+client.initialize();
