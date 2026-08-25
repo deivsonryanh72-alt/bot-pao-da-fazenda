@@ -1,15 +1,15 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
 
-// Servidor HTTP para satisfazer a porta do Render
 const PORT = process.env.PORT || 10000;
+
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('AgiBots - Bot Pao da Fazenda On-line!\n');
 }).listen(PORT, () => {
-    console.log(`[AgiBots] Servidor HTTP rodando na porta ${PORT}`);
+    console.log(`[AgiBots] Servidor HTTP ativo na porta ${PORT}`);
 });
 
 process.on('uncaughtException', (err) => {
@@ -23,10 +23,11 @@ async function startBot() {
         auth: state,
         logger: pino({ level: 'silent' }),
         printQRInTerminal: false,
+        // Configura o Baileys para se identificar como Ubuntu/Chrome (evita queda instantanea no Render)
+        browser: Browsers.ubuntu('Chrome'),
         downloadHistory: false,
         syncFullHistory: false,
         markOnlineOnConnect: false,
-        generateHighQualityLinkPreview: false,
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
         keepAliveIntervalMs: 30000
@@ -34,7 +35,7 @@ async function startBot() {
 
     sock.ev.on('creds.update', saveCreds);
 
-    sock.ev.on('connection.update', (update) => {
+    sock.ev.on('connection.update', async (update) => {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
@@ -49,15 +50,15 @@ async function startBot() {
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            console.log(`[AgiBots] Conexão fechada (${statusCode}). Reconectando em 5 segundos...`);
+            console.log(`[AgiBots] Conexão encerrada (status ${statusCode}). Tentando reconectar em 8 segundos...`);
             
             if (shouldReconnect) {
                 setTimeout(() => {
                     startBot();
-                }, 5000); // Aguarda 5 segundos antes de tentar novamente para nao entrar em loop
+                }, 8000);
             }
         } else if (connection === 'open') {
-            console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
+            console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda conectado com sucesso.\n');
         }
     });
 
@@ -76,7 +77,6 @@ async function startBot() {
 
             console.log(`[Mensagem Recebida de ${from}]: ${text}`);
 
-            // Menu Principal
             if (text.includes('oi') || text.includes('ola') || text.includes('boa') || text.includes('menu') || text === '0') {
                 const menu = 
 `🥖 *Pão da Fazenda - Panificação Artesanal*
