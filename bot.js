@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP simples para manter o Render ativo
+// Servidor HTTP simples para o Health Check do Render
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -30,7 +30,12 @@ const client = new Client({
             '--disable-dev-shm-usage',
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
-            '--disable-gpu'
+            '--no-zygote',
+            '--single-process', // Executa em processo único para economizar RAM
+            '--disable-gpu',
+            '--disable-extensions',
+            '--disable-component-update',
+            '--disable-background-networking'
         ]
     }
 });
