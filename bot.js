@@ -1,8 +1,7 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers, fetchLatestBaileysVersion } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
-const fs = require('fs');
 
 const PORT = process.env.PORT || 10000;
 
@@ -23,17 +22,18 @@ async function startBot() {
     if (isConnecting) return;
     isConnecting = true;
 
-    const authFolder = 'auth_info_baileys';
-    const { state, saveCreds } = await useMultiFileAuthState(authFolder);
+    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    const { version } = await fetchLatestBaileysVersion();
 
     const sock = makeWASocket({
+        version,
         auth: state,
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: false,
+        printQRInTerminal: true,
         browser: Browsers.ubuntu('Chrome'),
         downloadHistory: false,
         syncFullHistory: false,
-        markOnlineOnConnect: false,
+        markOnlineOnConnect: true,
         connectTimeoutMs: 60000,
         defaultQueryTimeoutMs: 60000,
         keepAliveIntervalMs: 30000
@@ -48,9 +48,6 @@ async function startBot() {
             console.log('\n================ ESCANEIE O QR CODE ABAIXO ================');
             qrcode.generate(qr, { small: true });
             console.log('===========================================================\n');
-            console.log('--- STRING DO QR CODE (CASO O DESENHO FIQUE DESALINHADO) ---');
-            console.log(qr);
-            console.log('-----------------------------------------------------------\n');
         }
 
         if (connection === 'close') {
@@ -58,22 +55,12 @@ async function startBot() {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             
-            console.log(`[AgiBots] Conexão encerrada (status ${statusCode}). Reiniciando em 5s...`);
-            
-            // Se as credenciais estiverem corrompidas ou desconectadas, limpa para regerar QR limpo
-            if (statusCode === 401 || statusCode === 428 || statusCode === 408 || !statusCode) {
-                if (fs.existsSync(authFolder)) {
-                    try {
-                        fs.rmSync(authFolder, { recursive: true, force: true });
-                        console.log('[AgiBots] Sessao limpa para nova tentativa de QR Code.');
-                    } catch (e) {}
-                }
-            }
+            console.log(`[AgiBots] Conexão fechada (${statusCode}). Reconectando em 10s...`);
 
             if (shouldReconnect) {
                 setTimeout(() => {
                     startBot();
-                }, 5000);
+                }, 10000);
             }
         } else if (connection === 'open') {
             isConnecting = false;
@@ -167,7 +154,4 @@ Um de nossos atendentes foi notificado e já vai te responder em instantes! Por 
     });
 }
 
-// Pequeno delay na inicializacao para o servidor HTTP subir primeiro
-setTimeout(() => {
-    startBot();
-}, 2000);
+startBot();
