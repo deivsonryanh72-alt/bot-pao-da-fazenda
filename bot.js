@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
 
-// Servidor HTTP para satisfazer o Render
+// Servidor HTTP para satisfazer a porta do Render
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -26,7 +26,10 @@ async function startBot() {
         downloadHistory: false,
         syncFullHistory: false,
         markOnlineOnConnect: false,
-        generateHighQualityLinkPreview: false
+        generateHighQualityLinkPreview: false,
+        connectTimeoutMs: 60000,
+        defaultQueryTimeoutMs: 60000,
+        keepAliveIntervalMs: 30000
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -46,9 +49,12 @@ async function startBot() {
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            console.log(`[AgiBots] Conexão fechada. Reconectando: ${shouldReconnect}`);
+            console.log(`[AgiBots] Conexão fechada (${statusCode}). Reconectando em 5 segundos...`);
+            
             if (shouldReconnect) {
-                startBot();
+                setTimeout(() => {
+                    startBot();
+                }, 5000); // Aguarda 5 segundos antes de tentar novamente para nao entrar em loop
             }
         } else if (connection === 'open') {
             console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
