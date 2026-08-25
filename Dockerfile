@@ -1,17 +1,23 @@
 FROM node:18-slim
 
-# Instala Chromium e dependências necessárias
 RUN apt-get update && apt-get install -y \
     chromium \
     libnss3 \
-    libfreetype6 \
-    libharfbuzz0b \
+    libatk1.0-0 \
+    libatk-bridge2.0-0 \
+    libcups2 \
+    libdrm2 \
+    libxkbcommon0 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxrandr2 \
+    libgbm1 \
+    libasound2 \
     ca-certificates \
     fonts-freefont-ttf \
     --no-install-recommends \
     && rm -rf /var/lib/apt-lists/*
 
-# Define variáveis de ambiente para o Puppeteer usar o Chromium do sistema
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
