@@ -2,6 +2,7 @@ const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
+const fs = require('fs');
 
 const PORT = process.env.PORT || 10000;
 
@@ -16,14 +17,19 @@ process.on('uncaughtException', (err) => {
     console.error('[AgiBots Aviso]:', err.message);
 });
 
+let isConnecting = false;
+
 async function startBot() {
-    const { state, saveCreds } = await useMultiFileAuthState('auth_info_baileys');
+    if (isConnecting) return;
+    isConnecting = true;
+
+    const authFolder = 'auth_info_baileys';
+    const { state, saveCreds } = await useMultiFileAuthState(authFolder);
 
     const sock = makeWASocket({
         auth: state,
         logger: pino({ level: 'silent' }),
         printQRInTerminal: false,
-        // Configura o Baileys para se identificar como Ubuntu/Chrome (evita queda instantanea no Render)
         browser: Browsers.ubuntu('Chrome'),
         downloadHistory: false,
         syncFullHistory: false,
@@ -48,16 +54,29 @@ async function startBot() {
         }
 
         if (connection === 'close') {
+            isConnecting = false;
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            console.log(`[AgiBots] Conexão encerrada (status ${statusCode}). Tentando reconectar em 8 segundos...`);
             
+            console.log(`[AgiBots] Conexão encerrada (status ${statusCode}). Reiniciando em 5s...`);
+            
+            // Se as credenciais estiverem corrompidas ou desconectadas, limpa para regerar QR limpo
+            if (statusCode === 401 || statusCode === 428 || statusCode === 408 || !statusCode) {
+                if (fs.existsSync(authFolder)) {
+                    try {
+                        fs.rmSync(authFolder, { recursive: true, force: true });
+                        console.log('[AgiBots] Sessao limpa para nova tentativa de QR Code.');
+                    } catch (e) {}
+                }
+            }
+
             if (shouldReconnect) {
                 setTimeout(() => {
                     startBot();
-                }, 8000);
+                }, 5000);
             }
         } else if (connection === 'open') {
+            isConnecting = false;
             console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda conectado com sucesso.\n');
         }
     });
@@ -148,4 +167,7 @@ Um de nossos atendentes foi notificado e já vai te responder em instantes! Por 
     });
 }
 
-startBot();
+// Pequeno delay na inicializacao para o servidor HTTP subir primeiro
+setTimeout(() => {
+    startBot();
+}, 2000);
