@@ -1,4 +1,4 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
@@ -28,7 +28,7 @@ async function startBot() {
         syncFullHistory: false,
         markOnlineOnConnect: false,
         generateHighQualityLinkPreview: false,
-        browser: ['AgiBots', 'Chrome', '1.0.0']
+        browser: Browsers.ubuntu('Chrome')
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -40,7 +40,7 @@ async function startBot() {
             console.log('\n================ ESCANEIE O QR CODE ================');
             qrcode.generate(qr, { small: true });
             console.log('===================================================');
-            console.log('STRING DO QR (se nao visualizar a imagem acima):');
+            console.log('STRING DO QR (caso queira gerar em site externo):');
             console.log(qr);
             console.log('===================================================\n');
         }
@@ -50,7 +50,6 @@ async function startBot() {
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
             console.log(`[AgiBots] Conexão fechada (${statusCode}). Reconectando...`);
             
-            // Se for erro de logoff ou sessão corrompida, limpa a pasta de auth
             if (statusCode === DisconnectReason.loggedOut) {
                 if (fs.existsSync('auth_info_baileys')) {
                     fs.rmSync('auth_info_baileys', { recursive: true, force: true });
