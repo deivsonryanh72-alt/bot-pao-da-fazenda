@@ -1,6 +1,7 @@
 const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
+const pino = require('pino');
 
 // Servidor HTTP para satisfazer a porta do Render
 const PORT = process.env.PORT || 10000;
@@ -16,7 +17,8 @@ async function startBot() {
 
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: false
+        printQRInTerminal: false,
+        logger: pino({ level: 'silent' })
     });
 
     sock.ev.on('creds.update', saveCreds);
