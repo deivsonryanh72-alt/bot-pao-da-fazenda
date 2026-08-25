@@ -1,6 +1,6 @@
 FROM node:18-slim
 
-# Instala as dependências necessárias do Chromium no Debian
+# Instala Chromium e dependências necessárias
 RUN apt-get update && apt-get install -y \
     chromium \
     libnss3 \
@@ -11,6 +11,7 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt-lists/*
 
+# Define variáveis de ambiente para o Puppeteer usar o Chromium do sistema
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium
 
@@ -20,5 +21,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
+
+EXPOSE 10000
 
 CMD ["node", "bot.js"]
