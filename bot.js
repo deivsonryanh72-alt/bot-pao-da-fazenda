@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para Render
+// Servidor HTTP para manter a porta aberta no Render
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -12,35 +12,50 @@ http.createServer((req, res) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('[AgiBots Aviso]:', err.message);
+    console.error('[AgiBots Log]:', err.message);
 });
 
 const client = new Client({
     authStrategy: new LocalAuth(),
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+    },
     puppeteer: {
-        headless: "new",
+        executablePath: '/usr/bin/chromium',
+        headless: true,
         args: [
             '--no-sandbox',
             '--disable-setuid-sandbox',
             '--disable-dev-shm-usage',
-            '--disable-gpu',
-            '--single-process' // Mantém o uso de memória baixo
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu'
         ]
     }
 });
 
-// Exibe QR Code no log
+// Gera o QR Code legível
 client.on('qr', (qr) => {
-    console.log('\n================ QR CODE GERADO ================');
+    console.log('\n================ ESCANEIE O QR CODE ================');
     qrcode.generate(qr, { small: true });
-    console.log('\n[AgiBots] Escaneie o QR Code acima no seu WhatsApp!\n');
+    console.log('===================================================\n');
 });
 
 client.on('ready', () => {
     console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
 });
 
-// Fluxo de mensagens
+client.on('authenticated', () => {
+    console.log('🔑 Autenticação realizada com sucesso no WhatsApp!');
+});
+
+client.on('auth_failure', msg => {
+    console.error('❌ Falha na autenticação:', msg);
+});
+
+// Respostas automáticas
 client.on('message', async msg => {
     try {
         const texto = msg.body.trim().toLowerCase();
@@ -64,7 +79,7 @@ Digite apenas o *NÚMERO* da opção desejada:
             await msg.reply(menu);
         } 
         
-        // Opção 1: Pães e Focaccias
+        // Opção 1
         else if (texto === '1') {
             await msg.reply(
 `🥖 *Destaques de Hoje na Pão da Fazenda:*
@@ -80,7 +95,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 2: Encomendas
+        // Opção 2
         else if (texto === '2') {
             await msg.reply(
 `🎂 *Encomendas Especiais:*
@@ -93,7 +108,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 3: Link do Site
+        // Opção 3
         else if (texto === '3') {
             await msg.reply(
 `🌐 *Acesse nosso site completo:*
@@ -105,7 +120,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 4: Localização e Maps
+        // Opção 4
         else if (texto === '4') {
             await msg.reply(
 `📍 *Venha nos visitar:*
@@ -120,7 +135,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 5: Atendimento Humano
+        // Opção 5
         else if (texto === '5') {
             await msg.reply(
 `👤 *Atendimento do Balcão:*
@@ -129,7 +144,7 @@ Um de nossos atendentes foi notificado e já vai te responder em instantes! Por 
             );
         }
     } catch (e) {
-        console.error('Erro:', e.message);
+        console.error('Erro na mensagem:', e.message);
     }
 });
 
