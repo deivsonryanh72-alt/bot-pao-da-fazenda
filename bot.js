@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para o Render
+// Servidor HTTP para manter o Render ativo
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -17,10 +17,6 @@ process.on('uncaughtException', (err) => {
 
 const client = new Client({
     authStrategy: new LocalAuth(),
-    webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.3000.1018940428-alpha.html',
-    },
     puppeteer: {
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         headless: true,
@@ -30,15 +26,17 @@ const client = new Client({
             '--disable-dev-shm-usage',
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
-            '--disable-gpu'
+            '--no-zygote',
+            '--disable-gpu',
+            '--disable-extensions'
         ]
     }
 });
 
-// Gera o QR Code nos logs em tamanho legível
+// Exibe o QR Code no terminal de forma legível
 client.on('qr', (qr) => {
-    console.log('\n================ NOVO QR CODE GENERATED ================');
-    qrcode.generate(qr, { small: false }); // Mapeia sem compactação para garantir a leitura da câmera
+    console.log('\n================ QR CODE GERADO ================');
+    qrcode.generate(qr, { small: true });
     console.log('\n[AgiBots] Escaneie o QR Code acima com o WhatsApp!\n');
 });
 
