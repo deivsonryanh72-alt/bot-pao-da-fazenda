@@ -3,13 +3,17 @@ const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
 
-// Servidor HTTP para satisfazer a porta do Render
+// Servidor HTTP para manter o Render ativo
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
     res.end('AgiBots - Bot Pao da Fazenda On-line!\n');
 }).listen(PORT, () => {
     console.log(`[AgiBots] Servidor HTTP rodando na porta ${PORT}`);
+});
+
+process.on('uncaughtException', (err) => {
+    console.error('[AgiBots Aviso]:', err.message);
 });
 
 async function startBot() {
@@ -78,7 +82,7 @@ Digite apenas o *NÚMERO* da opção desejada:
                 await sock.sendMessage(from, { text: menu });
             } 
             
-            // Opção 1
+            // Opção 1: Cardápio
             else if (text === '1') {
                 await sock.sendMessage(from, { text: 
 `🥖 *Destaques de Hoje na Pão da Fazenda:*
@@ -93,7 +97,7 @@ Digite apenas o *NÚMERO* da opção desejada:
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 2
+            // Opção 2: Encomendas
             else if (text === '2') {
                 await sock.sendMessage(from, { text: 
 `🎂 *Encomendas Especiais:*
@@ -105,7 +109,7 @@ Para solicitar o catálogo de sabores ou fazer um orçamento customizado, digite
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 3
+            // Opção 3: Site
             else if (text === '3') {
                 await sock.sendMessage(from, { text: 
 `🌐 *Acesse nosso site completo:*
@@ -116,7 +120,7 @@ Confira fotos em alta qualidade, avaliações dos clientes e história da nossa 
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 4
+            // Opção 4: Localização
             else if (text === '4') {
                 await sock.sendMessage(from, { text: 
 `📍 *Venha nos visitar:*
@@ -130,7 +134,7 @@ https://maps.google.com/?q=Rua+Alzira+Barnab%C3%A9,+407+-+Jardim+Belo+Horizonte,
 _Digite *0* para voltar ao Menu Principal._` });
             } 
 
-            // Opção 5
+            // Opção 5: Atendente
             else if (text === '5') {
                 await sock.sendMessage(from, { text: 
 `👤 *Atendimento do Balcão:*
