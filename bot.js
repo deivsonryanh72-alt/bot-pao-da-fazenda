@@ -3,7 +3,7 @@ const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
 
-// Servidor HTTP para o Render não derrubar a aplicação
+// Servidor HTTP para satisfazer o Render
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -38,9 +38,9 @@ async function startBot() {
             console.log('\n================ ESCANEIE O QR CODE ABAIXO ================');
             qrcode.generate(qr, { small: true });
             console.log('===========================================================\n');
-            console.log('--- COPIE O TEXTO DO QR SE A IMAGEM NAO FICAR BOA ---');
+            console.log('--- STRING DO QR CODE (CASO O DESENHO FIQUE DESALINHADO) ---');
             console.log(qr);
-            console.log('-----------------------------------------------------\n');
+            console.log('-----------------------------------------------------------\n');
         }
 
         if (connection === 'close') {
