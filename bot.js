@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para manter o Render ativo
+// Servidor HTTP para o Render não dar timeout
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -12,7 +12,7 @@ http.createServer((req, res) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('[AgiBots Erro]:', err.message);
+    console.error('[AgiBots Aviso]:', err.message);
 });
 
 const client = new Client({
@@ -27,7 +27,11 @@ const client = new Client({
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
             '--no-zygote',
-            '--disable-gpu'
+            '--disable-gpu',
+            '--mute-audio',
+            '--disable-extensions',
+            '--no-default-browser-check',
+            '--disable-default-apps'
         ]
     }
 });
@@ -46,18 +50,12 @@ client.on('ready', () => {
     console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
 });
 
-client.on('auth_failure', msg => {
-    console.error('❌ Falha na autenticação:', msg);
-});
-
-// Usamos 'message_create' para escutar TODAS as mensagens recebidas
 client.on('message_create', async msg => {
     try {
-        // Se a mensagem foi enviada pelo próprio bot para outra pessoa, ignora
         if (msg.fromMe) return;
 
         const texto = msg.body.trim().toLowerCase();
-        console.log(`[Mensagem Recebida de ${msg.from}]: ${texto}`);
+        console.log(`[Mensagem Recebida]: ${texto}`);
 
         // Menu Principal
         if (texto.includes('oi') || texto.includes('ola') || texto.includes('boa') || texto.includes('menu') || texto === '0') {
@@ -77,8 +75,6 @@ Digite apenas o *NÚMERO* da opção desejada:
 
             await msg.reply(menu);
         } 
-        
-        // Opção 1: Cardápio
         else if (texto === '1') {
             await msg.reply(
 `🥖 *Destaques de Hoje na Pão da Fazenda:*
@@ -93,8 +89,6 @@ Digite apenas o *NÚMERO* da opção desejada:
 _Digite *0* para voltar ao Menu Principal._`
             );
         } 
-
-        // Opção 2: Encomendas
         else if (texto === '2') {
             await msg.reply(
 `🎂 *Encomendas Especiais:*
@@ -106,8 +100,6 @@ Para solicitar o catálogo de sabores ou fazer um orçamento customizado, digite
 _Digite *0* para voltar ao Menu Principal._`
             );
         } 
-
-        // Opção 3: Site
         else if (texto === '3') {
             await msg.reply(
 `🌐 *Acesse nosso site completo:*
@@ -118,8 +110,6 @@ Confira fotos em alta qualidade, avaliações dos clientes e história da nossa 
 _Digite *0* para voltar ao Menu Principal._`
             );
         } 
-
-        // Opção 4: Localização
         else if (texto === '4') {
             await msg.reply(
 `📍 *Venha nos visitar:*
@@ -133,8 +123,6 @@ https://maps.google.com/?q=Rua+Alzira+Barnab%C3%A9,+407+-+Jardim+Belo+Horizonte,
 _Digite *0* para voltar ao Menu Principal._`
             );
         } 
-
-        // Opção 5: Atendente
         else if (texto === '5') {
             await msg.reply(
 `👤 *Atendimento do Balcão:*
@@ -143,7 +131,7 @@ Um de nossos atendentes foi notificado e já vai te responder em instantes! Por 
             );
         }
     } catch (e) {
-        console.error('Erro ao responder mensagem:', e.message);
+        console.error('Erro na mensagem:', e.message);
     }
 });
 
