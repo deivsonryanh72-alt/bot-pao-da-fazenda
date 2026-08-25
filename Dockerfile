@@ -1,9 +1,10 @@
-FROM node:18-alpine
+FROM node:18-slim
 
 WORKDIR /usr/src/app
 
 COPY package*.json ./
-RUN npm install --only=production
+# Ignora dependencias opcionais para nao tentar compilar C++ no Render
+RUN npm install --production --no-optional
 
 COPY . .
 
