@@ -1,6 +1,4 @@
-FROM ghcr.io/puppeteer/puppeteer:21
-
-USER root
+FROM node:18-alpine
 
 WORKDIR /usr/src/app
 

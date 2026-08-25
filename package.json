@@ -1,17 +1,13 @@
 {
   "name": "bot-pao-da-fazenda",
   "version": "1.0.0",
-  "description": "Automação WhatsApp - Pão da Fazenda",
+  "description": "Bot WhatsApp Pão da Fazenda",
   "main": "bot.js",
   "scripts": {
     "start": "node bot.js"
   },
-  "keywords": [],
-  "author": "AgiBots",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "qrcode-terminal": "^0.12.0",
-    "whatsapp-web.js": "^1.34.7"
+    "@whiskeysockets/baileys": "^6.6.0",
+    "qrcode-terminal": "^0.12.0"
   }
 }
