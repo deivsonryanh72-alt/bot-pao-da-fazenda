@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para manter a porta aberta no Render
+// Servidor HTTP para manter o Render ativo
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -12,15 +12,11 @@ http.createServer((req, res) => {
 });
 
 process.on('uncaughtException', (err) => {
-    console.error('[AgiBots Log]:', err.message);
+    console.error('[AgiBots Erro]:', err.message);
 });
 
 const client = new Client({
     authStrategy: new LocalAuth(),
-    webVersionCache: {
-        type: 'remote',
-        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-    },
     puppeteer: {
         executablePath: '/usr/bin/chromium',
         headless: true,
@@ -36,29 +32,32 @@ const client = new Client({
     }
 });
 
-// Gera o QR Code legível
 client.on('qr', (qr) => {
     console.log('\n================ ESCANEIE O QR CODE ================');
     qrcode.generate(qr, { small: true });
     console.log('===================================================\n');
 });
 
-client.on('ready', () => {
-    console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
-});
-
 client.on('authenticated', () => {
     console.log('🔑 Autenticação realizada com sucesso no WhatsApp!');
+});
+
+client.on('ready', () => {
+    console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
 });
 
 client.on('auth_failure', msg => {
     console.error('❌ Falha na autenticação:', msg);
 });
 
-// Respostas automáticas
-client.on('message', async msg => {
+// Usamos 'message_create' para escutar TODAS as mensagens recebidas
+client.on('message_create', async msg => {
     try {
+        // Se a mensagem foi enviada pelo próprio bot para outra pessoa, ignora
+        if (msg.fromMe) return;
+
         const texto = msg.body.trim().toLowerCase();
+        console.log(`[Mensagem Recebida de ${msg.from}]: ${texto}`);
 
         // Menu Principal
         if (texto.includes('oi') || texto.includes('ola') || texto.includes('boa') || texto.includes('menu') || texto === '0') {
@@ -79,7 +78,7 @@ Digite apenas o *NÚMERO* da opção desejada:
             await msg.reply(menu);
         } 
         
-        // Opção 1
+        // Opção 1: Cardápio
         else if (texto === '1') {
             await msg.reply(
 `🥖 *Destaques de Hoje na Pão da Fazenda:*
@@ -95,7 +94,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 2
+        // Opção 2: Encomendas
         else if (texto === '2') {
             await msg.reply(
 `🎂 *Encomendas Especiais:*
@@ -108,7 +107,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 3
+        // Opção 3: Site
         else if (texto === '3') {
             await msg.reply(
 `🌐 *Acesse nosso site completo:*
@@ -120,7 +119,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 4
+        // Opção 4: Localização
         else if (texto === '4') {
             await msg.reply(
 `📍 *Venha nos visitar:*
@@ -135,7 +134,7 @@ _Digite *0* para voltar ao Menu Principal._`
             );
         } 
 
-        // Opção 5
+        // Opção 5: Atendente
         else if (texto === '5') {
             await msg.reply(
 `👤 *Atendimento do Balcão:*
@@ -144,7 +143,7 @@ Um de nossos atendentes foi notificado e já vai te responder em instantes! Por 
             );
         }
     } catch (e) {
-        console.error('Erro na mensagem:', e.message);
+        console.error('Erro ao responder mensagem:', e.message);
     }
 });
 
