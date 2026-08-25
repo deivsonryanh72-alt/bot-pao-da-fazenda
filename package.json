@@ -6,9 +6,6 @@
   "scripts": {
     "start": "node --max-old-space-size=256 bot.js"
   },
-  "engines": {
-    "node": "18.x"
-  },
   "dependencies": {
     "@whiskeysockets/baileys": "^6.7.1",
     "pino": "^8.19.0",
