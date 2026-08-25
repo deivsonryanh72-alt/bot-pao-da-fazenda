@@ -21,7 +21,6 @@ async function startBot() {
 
     const sock = makeWASocket({
         auth: state,
-        printQRInTerminal: false,
         logger: pino({ level: 'silent' })
     });
 
@@ -31,9 +30,9 @@ async function startBot() {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log('\n================ ESCANEIE O QR CODE ================');
+            console.log('\n================ ESCANEIE O QR CODE ABAIXO ================');
             qrcode.generate(qr, { small: true });
-            console.log('===================================================\n');
+            console.log('===========================================================\n');
         }
 
         if (connection === 'close') {
