@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para o Render não fechar a porta
+// Servidor HTTP para o Render manter o container ativo
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -11,13 +11,16 @@ http.createServer((req, res) => {
     console.log(`[AgiBots] Servidor HTTP rodando na porta ${PORT}`);
 });
 
-// Evita crash do processo inteiro em caso de exceções não capturadas
 process.on('uncaughtException', (err) => {
-    console.error('[AgiBots Erro Oculto]:', err.message);
+    console.error('[AgiBots Aviso]:', err.message);
 });
 
 const client = new Client({
     authStrategy: new LocalAuth(),
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+    },
     puppeteer: {
         executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
         headless: true,
@@ -27,10 +30,7 @@ const client = new Client({
             '--disable-dev-shm-usage',
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu',
-            '--single-process', // Economiza recursos de RAM no Render Free
-            '--disable-extensions'
+            '--disable-gpu'
         ]
     }
 });
