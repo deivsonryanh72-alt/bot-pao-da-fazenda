@@ -1,10 +1,9 @@
-const { default: makeWASocket, useMultiFileAuthState, DisconnectReason, Browsers } = require('@whiskeysockets/baileys');
+const { default: makeWASocket, useMultiFileAuthState, DisconnectReason } = require('@whiskeysockets/baileys');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 const pino = require('pino');
-const fs = require('fs');
 
-// Servidor HTTP para satisfazer a porta do Render
+// Servidor HTTP para o Render não derrubar a aplicação
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -27,8 +26,7 @@ async function startBot() {
         downloadHistory: false,
         syncFullHistory: false,
         markOnlineOnConnect: false,
-        generateHighQualityLinkPreview: false,
-        browser: Browsers.ubuntu('Chrome')
+        generateHighQualityLinkPreview: false
     });
 
     sock.ev.on('creds.update', saveCreds);
@@ -37,25 +35,21 @@ async function startBot() {
         const { connection, lastDisconnect, qr } = update;
 
         if (qr) {
-            console.log('\n================ ESCANEIE O QR CODE ================');
+            console.log('\n================ ESCANEIE O QR CODE ABAIXO ================');
             qrcode.generate(qr, { small: true });
-            console.log('===================================================');
-            console.log('STRING DO QR (caso queira gerar em site externo):');
+            console.log('===========================================================\n');
+            console.log('--- COPIE O TEXTO DO QR SE A IMAGEM NAO FICAR BOA ---');
             console.log(qr);
-            console.log('===================================================\n');
+            console.log('-----------------------------------------------------\n');
         }
 
         if (connection === 'close') {
             const statusCode = lastDisconnect?.error?.output?.statusCode;
             const shouldReconnect = statusCode !== DisconnectReason.loggedOut;
-            console.log(`[AgiBots] Conexão fechada (${statusCode}). Reconectando...`);
-            
-            if (statusCode === DisconnectReason.loggedOut) {
-                if (fs.existsSync('auth_info_baileys')) {
-                    fs.rmSync('auth_info_baileys', { recursive: true, force: true });
-                }
+            console.log(`[AgiBots] Conexão fechada. Reconectando: ${shouldReconnect}`);
+            if (shouldReconnect) {
+                startBot();
             }
-            startBot();
         } else if (connection === 'open') {
             console.log('\n✅ AgiBots ativado! Robô da Pão da Fazenda pronto e rodando 24/7 na nuvem.\n');
         }
