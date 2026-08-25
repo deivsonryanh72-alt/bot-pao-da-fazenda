@@ -2,7 +2,7 @@ const { Client, LocalAuth } = require('whatsapp-web.js');
 const qrcode = require('qrcode-terminal');
 const http = require('http');
 
-// Servidor HTTP para manter o Render ativo
+// Servidor HTTP simples para manter o Render ativo
 const PORT = process.env.PORT || 10000;
 http.createServer((req, res) => {
     res.writeHead(200, { 'Content-Type': 'text/plain' });
@@ -17,8 +17,12 @@ process.on('uncaughtException', (err) => {
 
 const client = new Client({
     authStrategy: new LocalAuth(),
+    webVersionCache: {
+        type: 'remote',
+        remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
+    },
     puppeteer: {
-        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/chromium',
+        executablePath: process.env.PUPPETEER_EXECUTABLE_PATH || '/usr/bin/google-chrome',
         headless: true,
         args: [
             '--no-sandbox',
@@ -26,14 +30,12 @@ const client = new Client({
             '--disable-dev-shm-usage',
             '--disable-accelerated-2d-canvas',
             '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu',
-            '--disable-extensions'
+            '--disable-gpu'
         ]
     }
 });
 
-// Exibe o QR Code no terminal de forma legível
+// Exibe o QR Code no terminal
 client.on('qr', (qr) => {
     console.log('\n================ QR CODE GERADO ================');
     qrcode.generate(qr, { small: true });
