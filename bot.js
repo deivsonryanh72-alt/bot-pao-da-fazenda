@@ -29,7 +29,6 @@ async function startBot() {
         version,
         auth: state,
         logger: pino({ level: 'silent' }),
-        printQRInTerminal: true,
         browser: Browsers.ubuntu('Chrome'),
         downloadHistory: false,
         syncFullHistory: false,
